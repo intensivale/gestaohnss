@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Gerência de Leitos CTI - Hospital Nossa Senhora da Saúde">
+<meta name="theme-color" content="#1a7a6f">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛏️</text></svg>">
+<title>Gerência de Leitos - CTI | HNSS</title>
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+/* LOGIN */
+#loginOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a7a6f, #0d5047);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+#loginBox {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+}
+
+.login-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.login-logos img {
+    max-height: 80px;
+    object-fit: contain;
+}
+
+#loginBox h1 {
+    color: #0d5047;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+#loginBox h3 {
+    color: #666;
+    font-weight: normal;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+#loginBox input {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+#loginBox input:focus {
+    border-color: #1a7a6f;
+    outline: none;
+}
+
+#loginBox button {
+    width: 100%;
+    padding: 15px;
+    background: #1a7a6f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s;
+}
+
+#loginBox button:hover {
+    background: #0d5047;
+}
+
+#loginError {
+    color: #c62828;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+/* HEADER */
+.header {
+    background: linear-gradient(135deg, #1a7a6f, #0d5047);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.header-logos {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-logos img {
+    height: 60px;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.header h1 {
+    font-size: 22px;
+    flex: 1;
+    text-align: center;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+}
+
+.header-info button {
+    padding: 8px 15px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.header-info button:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* RESUMO */
+.resumo-bar {
+    background: white;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.resumo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+}
+
+.resumo-item .numero {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.resumo-item.ocupado .numero { color: #c62828; }
+.resumo-item.reservado .numero { color: #f57c00; }
+.resumo-item.vago .numero { color: #2e7d32; }
+
+/* LEGENDA */
+.legenda {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    padding: 15px;
+    flex-wrap: wrap;
+}
+
+.legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.legenda-cor {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+}
+
+.legenda-cor.ocupado { background: #ffcdd2; border: 2px solid #ef9a9a; }
+.legenda-cor.reservado { background: #ffe0b2; border: 2px solid #ffcc80; }
+.legenda-cor.vago { background: #c8e6c9; border: 2px solid #a5d6a7; }
+
+/* CONTAINER CTI */
+.cti-container {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.cti-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.cti-section h2 {
+    color: #0d5047;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #1a7a6f;
+    font-size: 24px;
+}
+
+/* GRID DE LEITOS */
+.leitos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.leito-card {
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    min-height: 120px;
+}
+
+.leito-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.leito-card.ocupado {
+    background: #ffcdd2;
+    border: 3px solid #ef5350;
+}
+
+.leito-card.reservado {
+    background: #ffe0b2;
+    border: 3px solid #ff9800;
+}
+
+.leito-card.vago {
+    background: #c8e6c9;
+    border: 3px solid #66bb6a;
+}
+
+.leito-numero {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.leito-status-icon {
+    font-size: 20px;
+}
+
+.leito-nome {
+    font-size: 15px;
+    color: #333;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+
+.leito-info {
+    font-size: 13px;
+    color: #666;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+.leito-dias {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #c62828;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 10000;
+    overflow-y: auto;
+}
+
+.modal.ativo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-conteudo {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #1a7a6f;
+}
+
+.modal-header h2 {
+    color: #0d5047;
+    font-size: 22px;
+}
+
+.btn-fechar {
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    line-height: 1;
+}
+
+.btn-fechar:hover {
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #1a7a6f;
+    outline: none;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #1a7a6f;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0d5047;
+}
+
+.btn-danger {
+    background: #c62828;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #8e0000;
+}
+
+.btn-secondary {
+    background: #757575;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #424242;
+}
+
+/* ALERTA SOLICITAÇÕES */
+#alertaSolicitacoes {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+    padding: 18px 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(255, 152, 0, 0.4);
+    z-index: 9999;
+    display: none;
+    animation: pulsar 1.5s infinite;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+@keyframes pulsar {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* SEÇÃO SOLICITAÇÕES */
+.solicitacoes-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.solicitacoes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #1a7a6f;
+}
+
+.solicitacoes-header h2 {
+    color: #0d5047;
+    font-size: 24px;
+}
+
+.badge {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.solicitacoes-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.solicitacao-card {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 22px;
+    border-left: 5px solid #ff9800;
+    transition: all 0.3s;
+}
+
+.solicitacao-card:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.solicitacao-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 15px;
+}
+
+.solicitacao-paciente {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+.solicitacao-tempo {
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+}
+
+.solicitacao-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.info-item {
+    font-size: 14px;
+}
+
+.info-label {
+    color: #666;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.solicitacao-acoes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .leitos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .modal-conteudo {
+        padding: 20px;
+    }
+    
+    .header-logos img {
+        height: 45px;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="loginOverlay">
+    <div id="loginBox">
+        <div class="login-logos">
+            <img src="HNSS.jpg" alt="Hospital Nossa Senhora da Saúde">
+            <img src="intensivale.jpeg" alt="Intensivale">
+        </div>
+        <h1>Gestão de Leitos - UTI</h1>
+        <h3>Hospital Nossa Senhora da Saúde</h3>
+        <input type="email" id="loginEmail" placeholder="E-mail" autocomplete="email">
+        <input type="password" id="loginPassword" placeholder="Senha" autocomplete="current-password">
+        <button onclick="fazerLogin()">Entrar</button>
+        <div id="loginError"></div>
+    </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-logos">
+        <img src="HNSS.jpg" alt="HNSS">
+        <img src="intensivale.jpeg" alt="Intensivale">
+    </div>
+    <h1>🛏️ Gestão de Leitos - UTI</h1>
+    <div class="header-info">
+        <span id="dataHoraAtual"></span>
+        <button onclick="exportarParaExcel()">📊 Exportar</button>
+        <button onclick="logout()">🚪 Sair</button>
+    </div>
+</div>
+
+<!-- RESUMO -->
+<div class="resumo-bar">
+    <div class="resumo-item ocupado">
+        <div class="numero" id="totalOcupados">0</div>
+        <div>Ocupados</div>
+    </div>
+    <div class="resumo-item reservado">
+        <div class="numero" id="totalReservados">0</div>
+        <div>Reservados</div>
+    </div>
+    <div class="resumo-item vago">
+        <div class="numero" id="totalVagos">0</div>
+        <div>Vagos</div>
+    </div>
+</div>
+
+<!-- LEGENDA -->
+<div class="legenda">
+    <div class="legenda-item">
+        <div class="legenda-cor ocupado"></div>
+        <span>Ocupado</span>
+    </div>
+    <div class="legenda-item">
+        <div class="legenda-cor reservado"></div>
+        <span>Reservado</span>
+    </div>
+    <div class="legenda-item">
+        <div class="legenda-cor vago"></div>
+        <span>Vago</span>
+    </div>
+</div>
+
+<!-- ALERTA DE NOVA SOLICITAÇÃO -->
+<div id="alertaSolicitacoes">
+    <strong>🔔 <span id="textoAlerta"></span></strong>
+</div>
+
+<!-- CONTAINER PRINCIPAL -->
+<div class="cti-container">
+    
+    <!-- SEÇÃO DE SOLICITAÇÕES PENDENTES -->
+    <div class="solicitacoes-section" id="secaoSolicitacoes" style="display:none;">
+        <div class="solicitacoes-header">
+            <h2>📋 Solicitações Pendentes</h2>
+            <span class="badge" id="badgeSolicitacoes">0</span>
+        </div>
+        <div class="solicitacoes-grid" id="listaSolicitacoes"></div>
+    </div>
+
+    <!-- UTI -->
+    <div class="cti-section">
+        <h2>🏥 Unidade de Terapia Intensiva</h2>
+        <div class="leitos-grid" id="gridUTI"></div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR LEITO -->
+<div class="modal" id="modalEditarLeito">
+    <div class="modal-conteudo">
+        <div class="modal-header">
+            <h2 id="tituloModal">Editar Leito</h2>
+            <button class="btn-fechar" onclick="fecharModal()">&times;</button>
+        </div>
+        
+        <div class="form-group">
+            <label>Status do Leito</label>
+            <select id="statusLeito" onchange="alterarStatusLeito()">
+                <option value="vago">Vago</option>
+                <option value="ocupado">Ocupado</option>
+                <option value="reservado">Reservado</option>
+            </select>
+        </div>
+
+        <div id="camposOcupado" style="display:none;">
+            <div class="form-group">
+                <label>Nome do Paciente</label>
+                <input type="text" id="nomePaciente" placeholder="Nome completo">
+            </div>
+
+            <div class="form-group">
+                <label>Motivo da Internação</label>
+                <textarea id="motivoInternacao" placeholder="Diagnóstico principal"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Data de Admissão</label>
+                <input type="date" id="dataAdmissao">
+            </div>
+
+            <div class="form-group">
+                <label>Observações</label>
+                <textarea id="observacoesLeito" placeholder="Observações adicionais"></textarea>
+            </div>
+        </div>
+
+        <div id="camposReservado" style="display:none;">
+            <div class="form-group">
+                <label>Motivo da Reserva</label>
+                <textarea id="motivoReserva" placeholder="Ex: Aguardando transferência, Pós-operatório"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Observações</label>
+                <textarea id="observacoesReserva" placeholder="Informações adicionais"></textarea>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+            <button class="btn btn-danger" onclick="liberarLeito()" id="btnLiberar" style="display:none;">Liberar Leito</button>
+            <button class="btn btn-primary" onclick="salvarLeito()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ALOCAÇÃO DE SOLICITAÇÃO -->
+<div class="modal" id="modalAlocacao">
+    <div class="modal-conteudo">
+        <div class="modal-header">
+            <h2>Alocar Paciente</h2>
+            <button class="btn-fechar" onclick="fecharModalAlocacao()">&times;</button>
+        </div>
+        
+        <div id="infoSolicitacao" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+            <!-- Info da solicitação será inserida aqui -->
+        </div>
+
+        <div class="form-group">
+            <label>Selecione o Leito</label>
+            <select id="leitoAlocacao">
+                <option value="">Carregando leitos disponíveis...</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="fecharModalAlocacao()">Cancelar</button>
+            <button class="btn btn-primary" onclick="aprovarSolicitacao()">Aprovar e Alocar</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
+<script>
+// ========== CONFIGURAÇÃO FIREBASE ==========
+const firebaseConfig = {
+    apiKey: "AIzaSyB7Mt4NsiXOam36i5MgClhKa-IOimlQ4DE",
+    authDomain: "gestaoutihnss.firebaseapp.com",
+    projectId: "gestaoutihnss",
+    storageBucket: "gestaoutihnss.firebasestorage.app",
+    messagingSenderId: "664272211913",
+    appId: "1:664272211913:web:66e30e6670126b3e51a218",
+    databaseURL: "https://gestaoutihnss-default-rtdb.firebaseio.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+let currentUser = null;
+let dadosLeitos = {};
+let dadosSolicitacoes = {};
+let leitoAtual = null;
+let solicitacaoAtual = null;
+
+// Som de alerta
+const audioAlerta = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuEzvLaizsIHWm98OOfUQwJT6rj7rdmHQU7k9n1ynkpBSh+y/DdlT0KFV+17OunVRQKRp/h8L5uIAUrh8zz2Ys9CB1ru/Dfn1INCFCq4+63Zh0FO5PZ9cp5KQUofsvw3ZU9ChZftuzrqFQUCkag4PG+biAFK4fM89mLPQgda7vw359SDQhQquPut2YdBTuT2fXKeisFKYDM8NyWPAoVXrbs66hUFApHoOHxv24fBSuIzPPZiz0IHWu78N+fUg0IUKrk7rdmHQU7lNn1ynorBSmAzPDdljwKFV+27OuoVBQKR6Dh8b9uHwUrh8zz2Ys9CB1ru/Dfn1INB1Cr5O64Zx0FO5TZ9cp6KwUpgMzw3ZY8ChVftuzrqFQUCkeg4vG/bh8FK4fM89mLPQgda7vw359SDQdQq+TuuGcdBTuU2fXKeisFKYDM8N2WPAoWX7bs66hUFApHoOLxv24fBSuHzPPZiz0IHWu78N+fUg0HUKvk7rhnHQU7lNn1ynorBSmAzPDdljwKFl+27OuoVBQKR6Di8b9uHwUrh8zz2Ys9CB1svPDfn1INB1Cr5O64Zx0FO5TZ9cp6KwUpgMzw3ZY8ChZftuzrqFQUCkeg4vG/bh8FK4fM89mLPQgdbLzw359SDQdQq+TuuGcdBTuU2fXKeisFKYDM8N2WPAoWX7bs66hUFApHoOLxv24fBSuHzPPZiz0IHWy88N+fUg0HUKvk7rhnHQU7lNn1ynorBSmAzPDdljwKFl+27OuoVBQKR6Di8b9uHwUriMzz2Ys9CB1svPDfn1INB1Cr5O+4aB0FPJXa9ct6KwUohczy3ZY8ChZgtuzrqFQUCkig4vG/bh8FK4jM89mLPQgdbLzw359SDQdQq+TvuGgdBTyV2vXMeisFKIfM8tyWPAoVYLbs66hUFApHoOLxv24fBSuHzPPZiz0IHWy88N+fUg0HUKvk77hoHQU8ldr1zHorBSiHzPLcljwKFWC27OuoVBQKR6Di8b9uHwUriMzz2Ys9CB1svPDfn1INB1Cr5O+4aB0FPJXa9cx6KwUoh8zy3JY8ChVgtuzrqFQUCkeg4vG/bh8FK4jM89mLPQgdbLzw359SDQdQq+TvuGgdBTyV2vXMeisFKIfM8tyWPAoVYLbs66hUFApHoOLxv24fBSuIzPPZiz0IHWy88N+fUg0HUKvk77hoHQU8ldr1zHorBSiHzPLcljwKFWC27OuoVBQKR6Di8b9uHwUriMzz2Ys9CB1svPDfn1INB1Cr5O+4aB0FPJXa9cx6KwUoh8zy3JY8ChVgtuzrqFQUCkeg4vG/bh8FK4jM89mLPQgdbLzw359SDQdQq+TvuGgdBTyV2vXMeisFKIfM8tyWPAoVYLbs66hUFApHoOLxv24fBSuIzPPZiz0IHWy88N+fUg0HUKvk77hoHQU8ldr1zHorBSiHzPLcljwKFWC27OuoVBQKR6Di8b9uHwUriMzz2Ys9CB1svPDfn1INB1Cr5O+4aB0FPJXa9cx6KwUoh8zy3JY8ChVgtuzrqFQUCkeg4vG/bh8FK4jM89mLPQgdbLzw359SDQdQq+TvuGgdBTyV2vXMeisFKIfM8tyWPAoVYLbs66hUFApHoOLxv24fBSuIzPPZiz0IHWy88N+fUg0HUKvk77hoHQU=');
+
+// Total de leitos da UTI
+const TOTAL_LEITOS = 10;
+
+// ========== AUTENTICAÇÃO ==========
+
+function fazerLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    
+    if (!email || !password) {
+        errorEl.textContent = 'Preencha todos os campos';
+        return;
+    }
+    
+    auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            currentUser = userCredential.user;
+            document.getElementById('loginOverlay').style.display = 'none';
+            inicializarSistema();
+        })
+        .catch((error) => {
+            if (error.code === 'auth/user-not-found') {
+                errorEl.textContent = 'Usuário não encontrado';
+            } else if (error.code === 'auth/wrong-password') {
+                errorEl.textContent = 'Senha incorreta';
+            } else if (error.code === 'auth/invalid-email') {
+                errorEl.textContent = 'E-mail inválido';
+            } else {
+                errorEl.textContent = 'Erro ao fazer login';
+            }
+            console.error('Erro no login:', error);
+        });
+}
+
+function logout() {
+    if (confirm('Deseja realmente sair?')) {
+        auth.signOut().then(() => {
+            window.location.reload();
+        });
+    }
+}
+
+// ========== INICIALIZAÇÃO ==========
+
+function inicializarSistema() {
+    atualizarDataHora();
+    setInterval(atualizarDataHora, 1000);
+    
+    inicializarLeitos();
+    carregarSolicitacoes();
+}
+
+function atualizarDataHora() {
+    const agora = new Date();
+    const opcoes = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+    document.getElementById('dataHoraAtual').textContent = 
+        agora.toLocaleDateString('pt-BR', opcoes);
+}
+
+function inicializarLeitos() {
+    // Carregar leitos do Firebase
+    db.ref('leitos').on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+            // Criar estrutura inicial - 10 leitos
+            for (let i = 1; i <= TOTAL_LEITOS; i++) {
+                const leitoId = `UTI_L${i.toString().padStart(2, '0')}`;
+                dadosLeitos[leitoId] = {
+                    numero: i,
+                    status: 'vago',
+                    pacienteNome: '',
+                    motivoInternacao: '',
+                    dataAdmissao: '',
+                    observacoes: '',
+                    motivo: ''
+                };
+            }
+            
+            // Salvar no Firebase
+            db.ref('leitos').set(dadosLeitos);
+        } else {
+            dadosLeitos = data;
+        }
+        
+        renderizarLeitos();
+        atualizarResumo();
+    });
+}
+
+function carregarSolicitacoes() {
+    db.ref('solicitacoes').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const solicitacoesAntigas = dadosSolicitacoes;
+        dadosSolicitacoes = data || {};
+        
+        // Verificar se há novas solicitações
+        const novasPendentes = Object.values(dadosSolicitacoes)
+            .filter(s => s.status === 'pendente').length;
+        const antigasPendentes = Object.values(solicitacoesAntigas)
+            .filter(s => s.status === 'pendente').length;
+            
+        if (novasPendentes > antigasPendentes) {
+            mostrarAlertaNovaSolicitacao();
+            tocarSom();
+        }
+        
+        renderizarSolicitacoes();
+        atualizarBadgeSolicitacoes();
+    });
+}
+
+// ========== RENDERIZAÇÃO ==========
+
+function renderizarLeitos() {
+    const grid = document.getElementById('gridUTI');
+    grid.innerHTML = '';
+    
+    Object.values(dadosLeitos)
+        .sort((a, b) => a.numero - b.numero)
+        .forEach(leito => {
+            const card = criarCardLeito(leito);
+            grid.appendChild(card);
+        });
+}
+
+function criarCardLeito(leito) {
+    const leitoId = `UTI_L${leito.numero.toString().padStart(2, '0')}`;
+    const card = document.createElement('div');
+    card.className = `leito-card ${leito.status}`;
+    card.onclick = () => abrirModalLeito(leitoId);
+    
+    let icone = '✅';
+    if (leito.status === 'ocupado') icone = '🔴';
+    if (leito.status === 'reservado') icone = '🟡';
+    
+    let conteudo = `
+        <div class="leito-numero">
+            <span>Leito ${leito.numero}</span>
+            <span class="leito-status-icon">${icone}</span>
+        </div>
+    `;
+    
+    if (leito.status === 'ocupado' && leito.pacienteNome) {
+        conteudo += `<div class="leito-nome">${leito.pacienteNome}</div>`;
+        
+        if (leito.dataAdmissao) {
+            const dias = calcularDiasInternacao(leito.dataAdmissao);
+            conteudo += `<div class="leito-dias">${dias}d</div>`;
+        }
+        
+        if (leito.motivoInternacao) {
+            conteudo += `<div class="leito-info">${leito.motivoInternacao.substring(0, 40)}${leito.motivoInternacao.length > 40 ? '...' : ''}</div>`;
+        }
+    } else if (leito.status === 'reservado') {
+        conteudo += `<div class="leito-nome">Reservado</div>`;
+        if (leito.motivo) {
+            conteudo += `<div class="leito-info">${leito.motivo.substring(0, 40)}${leito.motivo.length > 40 ? '...' : ''}</div>`;
+        }
+    } else {
+        conteudo += `<div class="leito-nome" style="color: #2e7d32;">Disponível</div>`;
+    }
+    
+    card.innerHTML = conteudo;
+    return card;
+}
+
+function calcularDiasInternacao(dataAdmissao) {
+    const admissao = new Date(dataAdmissao);
+    const hoje = new Date();
+    const diff = hoje - admissao;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function atualizarResumo() {
+    let ocupados = 0, reservados = 0, vagos = 0;
+    
+    Object.values(dadosLeitos).forEach(leito => {
+        if (leito.status === 'ocupado') ocupados++;
+        else if (leito.status === 'reservado') reservados++;
+        else vagos++;
+    });
+    
+    document.getElementById('totalOcupados').textContent = ocupados;
+    document.getElementById('totalReservados').textContent = reservados;
+    document.getElementById('totalVagos').textContent = vagos;
+}
+
+function renderizarSolicitacoes() {
+    const pendentes = Object.entries(dadosSolicitacoes)
+        .filter(([id, sol]) => sol.status === 'pendente')
+        .sort((a, b) => {
+            if (a[1].prioridade === 'alta' && b[1].prioridade !== 'alta') return -1;
+            if (a[1].prioridade !== 'alta' && b[1].prioridade === 'alta') return 1;
+            return new Date(a[1].dataHoraSolicitacao) - new Date(b[1].dataHoraSolicitacao);
+        });
+    
+    const lista = document.getElementById('listaSolicitacoes');
+    const secao = document.getElementById('secaoSolicitacoes');
+    
+    if (pendentes.length === 0) {
+        secao.style.display = 'none';
+        return;
+    }
+    
+    secao.style.display = 'block';
+    lista.innerHTML = '';
+    
+    pendentes.forEach(([id, sol]) => {
+        const card = criarCardSolicitacao(id, sol);
+        lista.appendChild(card);
+    });
+}
+
+function criarCardSolicitacao(id, sol) {
+    const card = document.createElement('div');
+    card.className = 'solicitacao-card';
+    
+    const tempoDecorrido = calcularTempoProcessamento(sol.dataHoraSolicitacao);
+    const corPrioridade = sol.prioridade === 'alta' ? '#c62828' : '#f57c00';
+    
+    card.innerHTML = `
+        <div class="solicitacao-header">
+            <div class="solicitacao-paciente">${sol.nomePaciente}</div>
+            <div class="solicitacao-tempo" style="color: ${corPrioridade};">⏱️ ${tempoDecorrido}</div>
+        </div>
+        
+        <div class="solicitacao-info">
+            <div class="info-item">
+                <div class="info-label">Idade:</div>
+                <div>${sol.idade} anos</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Origem:</div>
+                <div>${sol.localAlocacao}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Prioridade:</div>
+                <div style="color: ${corPrioridade}; font-weight: bold;">${sol.prioridade.toUpperCase()}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Solicitante:</div>
+                <div>${sol.nomeSolicitante}</div>
+            </div>
+        </div>
+        
+        <div style="margin: 12px 0; padding: 12px; background: white; border-radius: 8px;">
+            <div class="info-label">Diagnóstico:</div>
+            <div>${sol.diagnostico}</div>
+        </div>
+        
+        <div class="solicitacao-acoes">
+            <button class="btn btn-primary" onclick="abrirModalAlocacao('${id}')">✅ Aprovar e Alocar</button>
+            <button class="btn btn-secondary" onclick="verDetalhesSolicitacao('${id}')">👁️ Ver Detalhes</button>
+        </div>
+    `;
+    
+    return card;
+}
+
+function calcularTempoProcessamento(dataInicio) {
+    const inicio = new Date(dataInicio);
+    const agora = new Date();
+    const diff = agora - inicio;
+    
+    const horas = Math.floor(diff / (1000 * 60 * 60));
+    const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (horas > 0) {
+        return `${horas}h ${minutos}min`;
+    }
+    return `${minutos} min`;
+}
+
+function atualizarBadgeSolicitacoes() {
+    const pendentes = Object.values(dadosSolicitacoes)
+        .filter(sol => sol.status === 'pendente').length;
+    
+    document.getElementById('badgeSolicitacoes').textContent = pendentes;
+}
+
+function mostrarAlertaNovaSolicitacao() {
+    const alerta = document.getElementById('alertaSolicitacoes');
+    const texto = document.getElementById('textoAlerta');
+    const total = Object.values(dadosSolicitacoes).filter(s => s.status === 'pendente').length;
+    
+    texto.textContent = `Nova solicitação! Total: ${total}`;
+    alerta.style.display = 'block';
+    
+    setTimeout(() => {
+        alerta.style.display = 'none';
+    }, 5000);
+}
+
+function tocarSom() {
+    audioAlerta.play().catch(e => console.log('Erro ao tocar som:', e));
+}
+
+// ========== MODAIS ==========
+
+function abrirModalLeito(leitoId) {
+    leitoAtual = leitoId;
+    const leito = dadosLeitos[leitoId];
+    
+    document.getElementById('tituloModal').textContent = `UTI - Leito ${leito.numero}`;
+    
+    document.getElementById('statusLeito').value = leito.status;
+    
+    if (leito.status === 'ocupado') {
+        document.getElementById('nomePaciente').value = leito.pacienteNome || '';
+        document.getElementById('motivoInternacao').value = leito.motivoInternacao || '';
+        document.getElementById('dataAdmissao').value = leito.dataAdmissao || '';
+        document.getElementById('observacoesLeito').value = leito.observacoes || '';
+    } else if (leito.status === 'reservado') {
+        document.getElementById('motivoReserva').value = leito.motivo || '';
+        document.getElementById('observacoesReserva').value = leito.observacoes || '';
+    }
+    
+    alterarStatusLeito();
+    document.getElementById('modalEditarLeito').classList.add('ativo');
+}
+
+function fecharModal() {
+    document.getElementById('modalEditarLeito').classList.remove('ativo');
+    leitoAtual = null;
+}
+
+function alterarStatusLeito() {
+    const status = document.getElementById('statusLeito').value;
+    
+    document.getElementById('camposOcupado').style.display = 
+        status === 'ocupado' ? 'block' : 'none';
+    document.getElementById('camposReservado').style.display = 
+        status === 'reservado' ? 'block' : 'none';
+    document.getElementById('btnLiberar').style.display = 
+        status !== 'vago' ? 'inline-block' : 'none';
+}
+
+function salvarLeito() {
+    if (!leitoAtual) return;
+    
+    const status = document.getElementById('statusLeito').value;
+    const leito = dadosLeitos[leitoAtual];
+    
+    leito.status = status;
+    
+    if (status === 'ocupado') {
+        leito.pacienteNome = document.getElementById('nomePaciente').value;
+        leito.motivoInternacao = document.getElementById('motivoInternacao').value;
+        leito.dataAdmissao = document.getElementById('dataAdmissao').value;
+        leito.observacoes = document.getElementById('observacoesLeito').value;
+        
+        if (!leito.pacienteNome) {
+            alert('⚠️ Por favor, informe o nome do paciente');
+            return;
+        }
+    } else if (status === 'reservado') {
+        leito.motivo = document.getElementById('motivoReserva').value;
+        leito.observacoes = document.getElementById('observacoesReserva').value;
+    } else {
+        // Limpar dados ao liberar
+        leito.pacienteNome = '';
+        leito.motivoInternacao = '';
+        leito.dataAdmissao = '';
+        leito.observacoes = '';
+        leito.motivo = '';
+    }
+    
+    // Salvar no Firebase
+    db.ref(`leitos/${leitoAtual}`).set(leito)
+        .then(() => {
+            alert('✅ Leito atualizado com sucesso!');
+            fecharModal();
+        })
+        .catch((error) => {
+            alert('❌ Erro ao salvar: ' + error.message);
+        });
+}
+
+function liberarLeito() {
+    if (!leitoAtual) return;
+    
+    if (confirm('Tem certeza que deseja liberar este leito?')) {
+        const leito = dadosLeitos[leitoAtual];
+        leito.status = 'vago';
+        leito.pacienteNome = '';
+        leito.motivoInternacao = '';
+        leito.dataAdmissao = '';
+        leito.observacoes = '';
+        leito.motivo = '';
+        
+        db.ref(`leitos/${leitoAtual}`).set(leito)
+            .then(() => {
+                alert('✅ Leito liberado com sucesso!');
+                fecharModal();
+            })
+            .catch((error) => {
+                alert('❌ Erro ao liberar: ' + error.message);
+            });
+    }
+}
+
+// ========== ALOCAÇÃO DE SOLICITAÇÕES ==========
+
+function abrirModalAlocacao(solicitacaoId) {
+    solicitacaoAtual = solicitacaoId;
+    const sol = dadosSolicitacoes[solicitacaoId];
+    
+    if (!sol) return;
+    
+    document.getElementById('infoSolicitacao').innerHTML = `
+        <strong>Paciente:</strong> ${sol.nomePaciente}<br>
+        <strong>Idade:</strong> ${sol.idade} anos<br>
+        <strong>Diagnóstico:</strong> ${sol.diagnostico}<br>
+        <strong>Origem:</strong> ${sol.localAlocacao}
+    `;
+    
+    carregarLeitosDisponiveis();
+    document.getElementById('modalAlocacao').classList.add('ativo');
+}
+
+function fecharModalAlocacao() {
+    document.getElementById('modalAlocacao').classList.remove('ativo');
+    solicitacaoAtual = null;
+}
+
+function carregarLeitosDisponiveis() {
+    const select = document.getElementById('leitoAlocacao');
+    
+    const leitosDisponiveis = Object.entries(dadosLeitos)
+        .filter(([id, leito]) => leito.status === 'vago')
+        .sort((a, b) => a[1].numero - b[1].numero);
+    
+    if (leitosDisponiveis.length === 0) {
+        select.innerHTML = '<option value="">Nenhum leito disponível</option>';
+        return;
+    }
+    
+    select.innerHTML = '<option value="">Selecione um leito...</option>';
+    leitosDisponiveis.forEach(([id, leito]) => {
+        const option = document.createElement('option');
+        option.value = leito.numero;
+        option.textContent = `Leito ${leito.numero}`;
+        select.appendChild(option);
+    });
+}
+
+function aprovarSolicitacao() {
+    if (!solicitacaoAtual) return;
+    
+    const leito = document.getElementById('leitoAlocacao').value;
+    
+    if (!leito) {
+        alert('⚠️ Por favor, selecione um leito');
+        return;
+    }
+    
+    const sol = dadosSolicitacoes[solicitacaoAtual];
+    const leitoId = `UTI_L${leito.padStart(2, '0')}`;
+    
+    // Atualizar solicitação
+    sol.status = 'aprovada';
+    sol.ctiAlocado = 'UTI';
+    sol.leitoAlocado = leito;
+    sol.dataHoraAtualizacao = new Date().toISOString();
+    sol.atualizadoPor = currentUser.email;
+    sol.tempoProcessamento = calcularTempoProcessamento(sol.dataHoraSolicitacao);
+    
+    // Atualizar leito
+    const leitoObj = dadosLeitos[leitoId];
+    leitoObj.status = 'reservado';
+    leitoObj.motivo = `Aguardando Admissão - ${sol.nomePaciente}`;
+    leitoObj.observacoes = `Paciente: ${sol.nomePaciente}\nIdade: ${sol.idade} anos\nDiagnóstico: ${sol.diagnostico}\nOrigem: ${sol.localAlocacao}`;
+    leitoObj.reservadoPor = currentUser.email;
+    leitoObj.dataReserva = new Date().toISOString();
+    leitoObj.vinculoSolicitacao = solicitacaoAtual;
+    
+    // Salvar tudo no Firebase
+    Promise.all([
+        db.ref(`solicitacoes/${solicitacaoAtual}`).set(sol),
+        db.ref(`leitos/${leitoId}`).set(leitoObj)
+    ])
+    .then(() => {
+        alert(`✅ Solicitação aprovada com sucesso!\n\nUTI - Leito ${leito} RESERVADO\nPaciente: ${sol.nomePaciente}\nTempo: ${sol.tempoProcessamento}`);
+        fecharModalAlocacao();
+    })
+    .catch((error) => {
+        alert('❌ Erro ao aprovar: ' + error.message);
+    });
+}
+
+function verDetalhesSolicitacao(id) {
+    const sol = dadosSolicitacoes[id];
+    if (!sol) return;
+    
+    let detalhes = `═════════════════════════════════════════
+📋 DETALHES DA SOLICITAÇÃO
+═════════════════════════════════════════
+
+👤 PACIENTE
+Nome: ${sol.nomePaciente}
+Idade: ${sol.idade} anos
+Diagnóstico: ${sol.diagnostico}
+
+📍 ORIGEM
+Local: ${sol.localAlocacao}
+${sol.leitoAlocacao ? `Leito: ${sol.leitoAlocacao}` : ''}
+
+👨‍⚕️ SOLICITAÇÃO
+Solicitante: ${sol.nomeSolicitante}
+Data/Hora: ${new Date(sol.dataHoraSolicitacao).toLocaleString('pt-BR')}
+Prioridade: ${sol.prioridade.toUpperCase()}
+Status: ${sol.status.toUpperCase()}
+`;
+
+    if (sol.status === 'aprovada') {
+        detalhes += `\n✅ ALOCAÇÃO
+Leito: ${sol.leitoAlocado}
+Tempo de Processamento: ${sol.tempoProcessamento}
+Aprovado por: ${sol.atualizadoPor}
+Data: ${new Date(sol.dataHoraAtualizacao).toLocaleString('pt-BR')}
+`;
+    }
+    
+    if (sol.instabilidadeHemodinamica) {
+        detalhes += '\n⚠️ Instabilidade Hemodinâmica: SIM';
+    }
+    
+    if (sol.instabilidadeRespiratoria) {
+        detalhes += '\n⚠️ Instabilidade Respiratória: SIM';
+    }
+    
+    if (sol.sepse) {
+        detalhes += '\n⚠️ Sepse: SIM';
+    }
+    
+    if (sol.isolamentoRespiratorio) {
+        detalhes += '\n😷 Isolamento Respiratório: SIM';
+    }
+    
+    alert(detalhes);
+}
+
+// ========== EXPORTAR ==========
+
+function exportarParaExcel() {
+    const todasSolicitacoes = Object.values(dadosSolicitacoes);
+    
+    if (todasSolicitacoes.length === 0) {
+        alert('⚠️ Não há solicitações para exportar!');
+        return;
+    }
+    
+    let csv = 'sep=,\n';
+    csv += 'Status,Paciente,Idade,Diagnóstico,Origem,Leito,Solicitante,Data Solicitação,Prioridade,Tempo Processamento\n';
+    
+    todasSolicitacoes.forEach(sol => {
+        const row = [
+            sol.status || '',
+            sol.nomePaciente || '',
+            sol.idade || '',
+            (sol.diagnostico || '').replace(/,/g, ';'),
+            sol.localAlocacao || '',
+            sol.leitoAlocado || '',
+            sol.nomeSolicitante || '',
+            new Date(sol.dataHoraSolicitacao).toLocaleString('pt-BR'),
+            sol.prioridade || '',
+            sol.tempoProcessamento || calcularTempoProcessamento(sol.dataHoraSolicitacao)
+        ];
+        
+        csv += row.map(field => `"${field}"`).join(',') + '\n';
+    });
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const dataHora = new Date().toLocaleString('pt-BR').replace(/[/:]/g, '-').replace(',', '');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Solicitacoes_UTI_HNSS_${dataHora}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert(`✅ Relatório exportado!\n\nTotal: ${todasSolicitacoes.length} solicitações`);
+}
+
+// Enter para login
+document.addEventListener('DOMContentLoaded', () => {
+    const passwordInput = document.getElementById('loginPassword');
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') fazerLogin();
+        });
+    }
+});
+
+// Verificar estado de autenticação
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        document.getElementById('loginOverlay').style.display = 'none';
+        inicializarSistema();
+    } else {
+        document.getElementById('loginOverlay').style.display = 'flex';
+    }
+});
+</script>
+
+</body>
+</html>
