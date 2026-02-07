@@ -877,3 +877,427 @@ body {
                 <button type="button" class="btn-secondary" onclick="fecharModalLeito()">Cancelar</button>
                 <button type="submit" class="btn-primary">Salvar</button>
             </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL SOLICITAÇÃO -->
+<div id="modalSolicitacao" class="modal" style="display:none;">
+    <div class="modal-conteudo">
+        <div class="modal-header">
+            <h2>Nova Solicitação de Internação</h2>
+            <button class="modal-close" onclick="fecharModalSolicitacao()">×</button>
+        </div>
+        <form id="formSolicitacao" class="modal-form" onsubmit="salvarSolicitacao(event)">
+            <input type="hidden" id="solicitacaoId">
+
+            <div class="form-group">
+                <label>Nome do Paciente</label>
+                <input type="text" id="solNomePaciente" required>
+            </div>
+
+            <div class="form-group">
+                <label>Idade</label>
+                <input type="number" id="solIdadePaciente" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label>Sexo</label>
+                <select id="solSexoPaciente" required>
+                    <option value="">--</option>
+                    <option value="F">Feminino</option>
+                    <option value="M">Masculino</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Origem</label>
+                <input type="text" id="solOrigemPaciente" placeholder="Ex: PS, Enfermaria">
+            </div>
+
+            <div class="form-group full">
+                <label>Motivo da Internação</label>
+                <textarea id="motivoInternacao" placeholder="Diagnóstico principal"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Data de Admissão</label>
+                <input type="date" id="dataAdmissao">
+            </div>
+
+            <div class="form-group full">
+                <label>Observações</label>
+                <textarea id="observacoesSolicitacao"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="fecharModalSolicitacao()">Cancelar</button>
+                <button type="submit" class="btn-primary">Salvar Solicitação</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Dados em memória (poderia ser integrado a um backend/Firebase futuramente)
+let leitos = [];
+let solicitacoes = [];
+let leitoSelecionadoId = null;
+let solicitacaoSelecionadaId = null;
+
+// Atualiza data/hora no header
+function atualizarDataHora() {
+    const elemento = document.getElementById('dataHoraAtual');
+    if (!elemento) return;
+    const agora = new Date();
+    const opcoes = { 
+        weekday: 'short', 
+        day: '2-digit', 
+        month: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    };
+    elemento.textContent = agora.toLocaleString('pt-BR', opcoes);
+}
+setInterval(atualizarDataHora, 60000);
+atualizarDataHora();
+
+// LOGIN SIMPLES (mock)
+function fazerLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const senha = document.getElementById('loginPassword').value.trim();
+    const erro = document.getElementById('loginError');
+
+    if (!email || !senha) {
+        erro.textContent = 'Preencha e-mail e senha.';
+        erro.style.display = 'block';
+        return;
+    }
+
+    // Aqui poderia entrar validação real
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+}
+
+function logout() {
+    document.getElementById('appContainer').style.display = 'none';
+    document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+// LEITOS
+function atualizarResumo() {
+    const total = leitos.length;
+    const ocupados = leitos.filter(l => l.estado === 'ocupado').length;
+    const livres = leitos.filter(l => l.estado === 'livre').length;
+    const reservados = leitos.filter(l => l.estado === 'reservado').length;
+
+    document.getElementById('totalLeitos').textContent = total;
+    document.getElementById('ocupadosLeitos').textContent = ocupados;
+    document.getElementById('livresLeitos').textContent = livres;
+    document.getElementById('reservadosLeitos').textContent = reservados;
+}
+
+function renderizarLeitos() {
+    const grid = document.getElementById('gridLeitos');
+    grid.innerHTML = '';
+
+    const filtroEstado = document.getElementById('filtroEstado').value;
+    const filtroNome = document.getElementById('filtroNome').value.toLowerCase();
+
+    let lista = leitos;
+
+    if (filtroEstado !== 'todos') {
+        lista = lista.filter(l => l.estado === filtroEstado);
+    }
+
+    if (filtroNome) {
+        lista = lista.filter(l => 
+            (l.numero && l.numero.toLowerCase().includes(filtroNome)) ||
+            (l.nomePaciente && l.nomePaciente.toLowerCase().includes(filtroNome))
+        );
+    }
+
+    lista.forEach(leito => {
+        const card = document.createElement('div');
+        card.className = 'leito-card ' + leito.estado;
+
+        card.innerHTML = `
+            <div class="leito-header">
+                <span class="leito-numero">Leito ${leito.numero || ''}</span>
+                <span class="leito-estado ${leito.estado}">
+                    ${leito.estado.charAt(0).toUpperCase() + leito.estado.slice(1)}
+                </span>
+            </div>
+            <div class="leito-info">
+                <div><strong>Paciente:</strong> ${leito.nomePaciente || '—'}</div>
+                <div><strong>Diagnóstico:</strong> ${leito.diagnostico || '—'}</div>
+                <div><strong>Origem:</strong> ${leito.origem || '—'}</div>
+                <div><strong>Internação:</strong> ${leito.dataInternacao || '—'}</div>
+                ${leito.precaucao ? `<span class="leito-tag">🛡️ ${leito.precaucao}</span>` : ''}
+            </div>
+            <div class="leito-action">
+                <button onclick="abrirModalEditarLeito('${leito.id}')">Editar</button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    atualizarResumo();
+}
+
+function filtrarLeitos() {
+    renderizarLeitos();
+}
+
+function abrirModalNovoLeito() {
+    leitoSelecionadoId = null;
+    document.getElementById('modalTitulo').textContent = 'Novo Leito';
+    document.getElementById('formLeito').reset();
+    document.getElementById('leitoId').value = '';
+    document.getElementById('modalLeito').style.display = 'flex';
+}
+
+function abrirModalEditarLeito(id) {
+    const leito = leitos.find(l => l.id === id);
+    if (!leito) return;
+    leitoSelecionadoId = id;
+    document.getElementById('modalTitulo').textContent = `Editar Leito ${leito.numero}`;
+
+    document.getElementById('leitoId').value = leito.id;
+    document.getElementById('numeroLeito').value = leito.numero || '';
+    document.getElementById('estadoLeito').value = leito.estado || 'livre';
+    document.getElementById('nomePaciente').value = leito.nomePaciente || '';
+    document.getElementById('idadePaciente').value = leito.idade || '';
+    document.getElementById('sexoPaciente').value = leito.sexo || '';
+    document.getElementById('origemPaciente').value = leito.origem || '';
+    document.getElementById('diagnosticoPaciente').value = leito.diagnostico || '';
+    document.getElementById('dataInternacao').value = leito.dataInternacao || '';
+    document.getElementById('previsaoAlta').value = leito.previsaoAlta || '';
+    document.getElementById('precaucao').value = leito.precaucao || '';
+    document.getElementById('observacoesLeito').value = leito.observacoes || '';
+
+    document.getElementById('modalLeito').style.display = 'flex';
+}
+
+function fecharModalLeito() {
+    document.getElementById('modalLeito').style.display = 'none';
+}
+
+function salvarLeito(event) {
+    event.preventDefault();
+    const id = document.getElementById('leitoId').value || Date.now().toString();
+
+    const novoLeito = {
+        id,
+        numero: document.getElementById('numeroLeito').value.trim(),
+        estado: document.getElementById('estadoLeito').value,
+        nomePaciente: document.getElementById('nomePaciente').value.trim(),
+        idade: document.getElementById('idadePaciente').value,
+        sexo: document.getElementById('sexoPaciente').value,
+        origem: document.getElementById('origemPaciente').value.trim(),
+        diagnostico: document.getElementById('diagnosticoPaciente').value.trim(),
+        dataInternacao: document.getElementById('dataInternacao').value,
+        previsaoAlta: document.getElementById('previsaoAlta').value,
+        precaucao: document.getElementById('precaucao').value.trim(),
+        observacoes: document.getElementById('observacoesLeito').value.trim()
+    };
+
+    const indice = leitos.findIndex(l => l.id === id);
+    if (indice >= 0) {
+        leitos[indice] = novoLeito;
+    } else {
+        leitos.push(novoLeito);
+    }
+
+    fecharModalLeito();
+    renderizarLeitos();
+}
+
+function excluirLeito() {
+    if (!leitoSelecionadoId) {
+        fecharModalLeito();
+        return;
+    }
+    if (!confirm('Tem certeza que deseja excluir este leito?')) return;
+    leitos = leitos.filter(l => l.id !== leitoSelecionadoId);
+    leitoSelecionadoId = null;
+    fecharModalLeito();
+    renderizarLeitos();
+}
+
+// SOLICITAÇÕES
+function salvarSolicitacao(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('solicitacaoId').value || Date.now().toString();
+    const novaSolicitacao = {
+        id,
+        nomePaciente: document.getElementById('solNomePaciente').value.trim(),
+        idade: document.getElementById('solIdadePaciente').value,
+        sexo: document.getElementById('solSexoPaciente').value,
+        origem: document.getElementById('solOrigemPaciente').value.trim(),
+        motivo: document.getElementById('motivoInternacao').value.trim(),
+        dataAdmissao: document.getElementById('dataAdmissao').value,
+        observacoes: document.getElementById('observacoesSolicitacao').value.trim(),
+        dataRegistro: new Date().toLocaleString('pt-BR')
+    };
+
+    const indice = solicitacoes.findIndex(s => s.id === id);
+    if (indice >= 0) {
+        solicitacoes[indice] = novaSolicitacao;
+    } else {
+        solicitacoes.push(novaSolicitacao);
+        mostrarAlertaSolicitacoes();
+    }
+
+    fecharModalSolicitacao();
+    renderizarSolicitacoes();
+}
+
+function renderizarSolicitacoes() {
+    const lista = document.getElementById('listaSolicitacoes');
+    lista.innerHTML = '';
+
+    solicitacoes.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'solicitacao-card';
+        card.innerHTML = `
+            <h4>${s.nomePaciente} (${s.idade} anos, ${s.sexo || '-'})</h4>
+            <p><strong>Origem:</strong> ${s.origem || '—'}</p>
+            <p><strong>Motivo:</strong> ${s.motivo || '—'}</p>
+            <p><strong>Data admissão:</strong> ${s.dataAdmissao || '—'}</p>
+            <p class="solicitacao-meta">Registrado em: ${s.dataRegistro}</p>
+        `;
+        lista.appendChild(card);
+    });
+
+    document.getElementById('badgeSolicitacoes').textContent =
+        `${solicitacoes.length} solicitações`;
+}
+
+function abrirModalSolicitacao() {
+    document.getElementById('formSolicitacao').reset();
+    document.getElementById('solicitacaoId').value = '';
+    document.getElementById('modalSolicitacao').style.display = 'flex';
+}
+
+function fecharModalSolicitacao() {
+    document.getElementById('modalSolicitacao').style.display = 'none';
+}
+
+function mostrarAlertaSolicitacoes() {
+    const alerta = document.getElementById('alertaSolicitacoes');
+    alerta.style.display = 'flex';
+
+    setTimeout(() => {
+        alerta.style.display = 'none';
+    }, 8000);
+}
+
+function rolarParaSolicitacoes() {
+    const secao = document.querySelector('.solicitacoes-section');
+    if (secao) {
+        secao.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// EXPORTAR (simples, CSV)
+function exportarParaExcel() {
+    if (leitos.length === 0) {
+        alert('Não há dados para exportar.');
+        return;
+    }
+
+    const linhas = [];
+    linhas.push([
+        'Leito',
+        'Estado',
+        'Paciente',
+        'Idade',
+        'Sexo',
+        'Origem',
+        'Diagnóstico',
+        'Data Internação',
+        'Previsão Alta',
+        'Precaução',
+        'Observações'
+    ].join(';'));
+
+    leitos.forEach(l => {
+        linhas.push([
+            l.numero || '',
+            l.estado || '',
+            l.nomePaciente || '',
+            l.idade || '',
+            l.sexo || '',
+            l.origem || '',
+            l.diagnostico || '',
+            l.dataInternacao || '',
+            l.previsaoAlta || '',
+            l.precaucao || '',
+            (l.observacoes || '').replace(/(\r\n|\n|\r)/g, ' ')
+        ].join(';'));
+    });
+
+    const csv = linhas.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const data = new Date().toISOString().slice(0,10);
+    link.download = `leitos_uti_${data}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Inicialização com alguns leitos de exemplo
+(function inicializarMock() {
+    leitos = [
+        {
+            id: '1',
+            numero: '01',
+            estado: 'ocupado',
+            nomePaciente: 'Fulano da Silva',
+            idade: 67,
+            sexo: 'M',
+            origem: 'PS',
+            diagnostico: 'Sepse de foco pulmonar',
+            dataInternacao: '2026-02-05',
+            previsaoAlta: '',
+            precaucao: 'Contato',
+            observacoes: 'Em uso de noradrenalina.'
+        },
+        {
+            id: '2',
+            numero: '02',
+            estado: 'livre',
+            nomePaciente: '',
+            idade: '',
+            sexo: '',
+            origem: '',
+            diagnostico: '',
+            dataInternacao: '',
+            previsaoAlta: '',
+            precaucao: '',
+            observacoes: ''
+        },
+        {
+            id: '3',
+            numero: '03',
+            estado: 'reservado',
+            nomePaciente: '',
+            idade: '',
+            sexo: '',
+            origem: 'PS',
+            diagnostico: 'AVC isquêmico',
+            dataInternacao: '',
+            previsaoAlta: '',
+            precaucao: '',
+            observacoes: 'Paciente em transferência.'
+        }
+    ];
+    renderizarLeitos();
+})();
+</script>
+</body>
+</html>
