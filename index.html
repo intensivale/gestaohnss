@@ -6,7 +6,7 @@
 <meta name="description" content="Gerência de Leitos CTI - Hospital Nossa Senhora da Saúde">
 <meta name="theme-color" content="#1a7a6f">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛏️</text></svg>">
-<title>Gerência de Leitos - CTI | HNSS</title>
+<title>Gestão de Leitos - UTI | HNSS</title>
 <style>
 * {
     box-sizing: border-box;
@@ -53,7 +53,8 @@ body {
 }
 
 .login-logos img {
-    max-height: 80px;
+    max-height: 60px;
+    max-width: 150px;
     object-fit: contain;
 }
 
@@ -127,15 +128,16 @@ body {
 }
 
 .header-logos img {
-    height: 60px;
+    height: 45px;
+    max-width: 120px;
     background: white;
-    padding: 8px;
+    padding: 5px;
     border-radius: 8px;
     object-fit: contain;
 }
 
 .header h1 {
-    font-size: 22px;
+    font-size: 20px;
     flex: 1;
     text-align: center;
 }
@@ -144,7 +146,7 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .header-info button {
@@ -155,6 +157,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s;
+    font-size: 13px;
 }
 
 .header-info button:hover {
@@ -581,7 +584,13 @@ body {
     }
     
     .header-logos img {
-        height: 45px;
+        height: 35px;
+        max-width: 90px;
+    }
+    
+    .login-logos img {
+        max-height: 50px;
+        max-width: 120px;
     }
 }
 </style>
@@ -592,8 +601,8 @@ body {
 <div id="loginOverlay">
     <div id="loginBox">
         <div class="login-logos">
-            <img src="HNSS.jpg" alt="Hospital Nossa Senhora da Saúde">
-            <img src="intensivale.jpeg" alt="Intensivale">
+            <img src="img/HNSS.jpg" alt="Hospital Nossa Senhora da Saúde" onerror="this.style.display='none'">
+            <img src="img/intensivale.jpeg" alt="Intensivale" onerror="this.style.display='none'">
         </div>
         <h1>Gestão de Leitos - UTI</h1>
         <h3>Hospital Nossa Senhora da Saúde</h3>
@@ -607,13 +616,15 @@ body {
 <!-- HEADER -->
 <div class="header">
     <div class="header-logos">
-        <img src="HNSS.jpg" alt="HNSS">
-        <img src="intensivale.jpeg" alt="Intensivale">
+        <img src="img/HNSS.jpg" alt="HNSS" onerror="this.style.display='none'">
+        <img src="img/intensivale.jpeg" alt="Intensivale" onerror="this.style.display='none'">
     </div>
     <h1>🛏️ Gestão de Leitos - UTI</h1>
     <div class="header-info">
         <span id="dataHoraAtual"></span>
-        <button onclick="exportarParaExcel()">📊 Exportar</button>
+        <button onclick="window.location.href='solicitacaocti.html'">📋 Solicitar Vaga</button>
+        <button onclick="window.location.href='passometrouti.html'">📊 Passômetro</button>
+        <button onclick="exportarParaExcel()">📥 Exportar</button>
         <button onclick="logout()">🚪 Sair</button>
     </div>
 </div>
