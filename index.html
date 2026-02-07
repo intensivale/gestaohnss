@@ -46,11 +46,11 @@ body {
     justify-content: center;
     align-items: center;
     gap: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .login-logos img {
-    max-height: 45px;
+    max-height: 80px;      /* AUMENTADO */
     object-fit: contain;
 }
 
@@ -119,7 +119,7 @@ body {
 }
 
 .header-logos img {
-    height: 45px;
+    height: 70px;          /* AUMENTADO */
     background: white;
     padding: 8px;
     border-radius: 8px;
@@ -422,14 +422,13 @@ body {
 
 /* MODAL */
 .modal {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.45);
-    display: flex;
+    display: none;          /* começa escondido */
     justify-content: center;
     align-items: center;
     z-index: 10000;
@@ -669,7 +668,7 @@ body {
     }
 
     .header-logos img {
-        height: 45px;
+        height: 60px;
     }
 }
 </style>
@@ -685,9 +684,13 @@ body {
         </div>
         <h1>Gestão de Leitos - UTI</h1>
         <h3>Hospital Nossa Senhora da Saúde</h3>
-        <input type="email" id="loginEmail" placeholder="E-mail" autocomplete="email">
-        <input type="password" id="loginPassword" placeholder="Senha" autocomplete="current-password">
-        <button onclick="fazerLogin()">Entrar</button>
+
+        <form onsubmit="fazerLogin(); return false;">
+            <input type="email" id="loginEmail" placeholder="E-mail" autocomplete="email">
+            <input type="password" id="loginPassword" placeholder="Senha" autocomplete="current-password">
+            <button type="submit">Entrar</button>
+        </form>
+
         <p id="loginError" style="color:#ffeb3b; margin-top:8px; font-size:13px; display:none;"></p>
     </div>
 </div>
@@ -800,7 +803,7 @@ body {
 </div>
 
 <!-- MODAL LEITO -->
-<div id="modalLeito" class="modal" style="display:none;">
+<div id="modalLeito" class="modal">
     <div class="modal-conteudo">
         <div class="modal-header">
             <h2 id="modalTitulo">Leito</h2>
@@ -882,7 +885,7 @@ body {
 </div>
 
 <!-- MODAL SOLICITAÇÃO -->
-<div id="modalSolicitacao" class="modal" style="display:none;">
+<div id="modalSolicitacao" class="modal">
     <div class="modal-conteudo">
         <div class="modal-header">
             <h2>Nova Solicitação de Internação</h2>
@@ -939,7 +942,7 @@ body {
 </div>
 
 <script>
-// Dados em memória (poderia ser integrado a um backend/Firebase futuramente)
+// Dados em memória (poderia ser integrado a backend/Firebase futuramente)
 let leitos = [];
 let solicitacoes = [];
 let leitoSelecionadoId = null;
@@ -950,19 +953,19 @@ function atualizarDataHora() {
     const elemento = document.getElementById('dataHoraAtual');
     if (!elemento) return;
     const agora = new Date();
-    const opcoes = { 
-        weekday: 'short', 
-        day: '2-digit', 
-        month: '2-digit', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+    const opcoes = {
+        weekday: 'short',
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
     };
     elemento.textContent = agora.toLocaleString('pt-BR', opcoes);
 }
 setInterval(atualizarDataHora, 60000);
 atualizarDataHora();
 
-// LOGIN SIMPLES (mock)
+// LOGIN
 function fazerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value.trim();
@@ -974,7 +977,7 @@ function fazerLogin() {
         return;
     }
 
-    // Aqui poderia entrar validação real
+    erro.style.display = 'none';
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
 }
@@ -1011,7 +1014,7 @@ function renderizarLeitos() {
     }
 
     if (filtroNome) {
-        lista = lista.filter(l => 
+        lista = lista.filter(l =>
             (l.numero && l.numero.toLowerCase().includes(filtroNome)) ||
             (l.nomePaciente && l.nomePaciente.toLowerCase().includes(filtroNome))
         );
@@ -1201,7 +1204,7 @@ function rolarParaSolicitacoes() {
     }
 }
 
-// EXPORTAR (simples, CSV)
+// EXPORTAR (CSV simples)
 function exportarParaExcel() {
     if (leitos.length === 0) {
         alert('Não há dados para exportar.');
